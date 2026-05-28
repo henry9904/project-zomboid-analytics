@@ -1,0 +1,7 @@
+name=DataDumper
+poster=poster.png
+id=DataDumper
+description=Extracts player stats, inventory, zombie positions, and weather data to CSV/JSON files for external analysis. Vanilla-only, no mod dependencies.
+url=https://github.com/henry9904/project-zomboid-analytics
+modversion=0.1.0
+pzversion=41.78
