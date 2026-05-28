@@ -1,43 +1,41 @@
--- DataDumper: entry point and shared utilities
--- All output goes to %UserProfile%/Zomboid/Lua/
+-- DataDumper init: shared file-writer utility + one-shot header bootstrap.
+-- All loggers in this directory require this module first.
 
-DataDumper = {}
-DataDumper.FLUSH_INTERVAL = 100  -- flush every N lines
-DataDumper._buffers = {}
+DataDumper = DataDumper or {}
+DataDumper.SESSION_ID  = tostring(os.time())
+DataDumper.PLAYER_LOG  = "player_stats_session_"       .. DataDumper.SESSION_ID .. ".csv"
+DataDumper.ZOMBIE_LOG  = "zombie_log_session_"         .. DataDumper.SESSION_ID .. ".csv"
+DataDumper.NOISE_LOG   = "noise_events_session_"       .. DataDumper.SESSION_ID .. ".csv"
+DataDumper.INV_LOG     = "inventory_snapshot_session_" .. DataDumper.SESSION_ID .. ".csv"
 
-function DataDumper.getTimestamp()
-    local gt = getGameTime()
-    return string.format("%.2f", gt:getWorldAgeHours())
+local function writeLine(filename, line)
+    local w = getFileWriter(filename, true, true)
+    w:write(line .. "\n")
+    w:close()
 end
+DataDumper.writeLine = writeLine
 
-function DataDumper.writeCSVLine(filename, line)
-    local writer = getFileWriter(filename, true, false)
-    writer:write(line .. "\n")
-    writer:close()
-end
-
-function DataDumper.writeHeader(filename, header)
-    -- Write header only if file is new (check by trying to read first line)
-    local reader = getFileReader(filename, false)
-    if reader == nil then
-        DataDumper.writeCSVLine(filename, header)
+local function initFile(filename, header)
+    local r = getFileReader(filename, false)
+    if r == nil then
+        local w = getFileWriter(filename, true, true)
+        w:write(header .. "\n")
+        w:close()
     else
-        reader:close()
+        r:close()
     end
 end
 
-Events.OnGameStart.Add(function()
-    DataDumper.writeHeader(
-        "datadumper_player_stats.csv",
-        "world_age_hours,day,hour,x,y,z,hunger,thirst,fatigue,stress,panic,boredom,calories,weight,carbs,protein,fat"
-    )
-    DataDumper.writeHeader(
-        "datadumper_zombie_log.csv",
-        "world_age_hours,zx,zy,zz,state"
-    )
-    DataDumper.writeHeader(
-        "datadumper_noise_events.csv",
-        "world_age_hours,src_x,src_y,volume"
-    )
-    print("[DataDumper] Initialized. Output: %UserProfile%/Zomboid/Lua/")
-end)
+local function onGameStart()
+    initFile(DataDumper.PLAYER_LOG,
+        "world_age_hours,day,hour,x,y,z,hunger,thirst,fatigue,stress,panic,boredom,calories,weight,carbs,protein,fat")
+    initFile(DataDumper.ZOMBIE_LOG,
+        "world_age_hours,zx,zy,zz,state")
+    initFile(DataDumper.NOISE_LOG,
+        "world_age_hours,source_x,source_y,intensity,noise_type")
+    initFile(DataDumper.INV_LOG,
+        "world_age_hours,item_type,count,calories_per_unit,carbs_per_unit,protein_per_unit,fat_per_unit")
+    print("[DataDumper] session " .. DataDumper.SESSION_ID .. " logging started")
+end
+
+Events.OnGameStart.Add(onGameStart)

@@ -1,52 +1,36 @@
--- ZombieLogger: samples zombie positions every 6 game-hours
--- Logs only zombies within 50 cells of player to limit volume
--- Output: datadumper_zombie_log.csv
+-- Logs zombies within 50 cells of the player every 6 in-game hours.
+-- Throttled to avoid stalling the main thread on dense outdoor maps.
+require "DataDumper_Init"
 
-local SAMPLE_RADIUS = 50  -- cells (1 cell = 10 in-game meters)
-local SAMPLE_INTERVAL_HOURS = 6
-local _lastSampleHour = -1
-
-local function shouldSample()
-    local currentHour = getGameTime():getWorldAgeHours()
-    if currentHour - _lastSampleHour >= SAMPLE_INTERVAL_HOURS then
-        _lastSampleHour = currentHour
-        return true
-    end
-    return false
-end
+local TICK_COUNTER = 0
+local LOG_EVERY    = 3  -- 3 * 2h tick = every 6 in-game hours
+local RADIUS       = 50 -- cells
 
 local function logZombies()
-    if not shouldSample() then return end
+    TICK_COUNTER = TICK_COUNTER + 1
+    if TICK_COUNTER % LOG_EVERY ~= 0 then return end
+
+    local cell = getCell()
+    if cell == nil then return end
+    local zlist = cell:getZombieList()
+    if zlist == nil then return end
 
     local player = getSpecificPlayer(0)
-    if not player then return end
-
+    if player == nil then return end
     local px, py = player:getX(), player:getY()
-    local ts     = DataDumper.getTimestamp()
-    local zombieList = getCell():getZombieList()
-    local count  = 0
+    local age = getGameTime():getWorldAgeHours()
 
-    for i = 0, zombieList:size() - 1 do
-        local zombie = zombieList:get(i)
-        local zx, zy = zombie:getX(), zombie:getY()
-
-        -- distance filter: Manhattan for speed
-        if math.abs(zx - px) <= SAMPLE_RADIUS and math.abs(zy - py) <= SAMPLE_RADIUS then
-            local zz    = string.format("%.1f", zombie:getZ())
-            local state = tostring(zombie:getActivityState())
-            local line  = table.concat({
-                ts,
-                string.format("%.1f", zx),
-                string.format("%.1f", zy),
-                zz,
-                state,
-            }, ",")
-            DataDumper.writeCSVLine("datadumper_zombie_log.csv", line)
-            count = count + 1
+    for i = 0, zlist:size() - 1 do
+        local z = zlist:get(i)
+        local zx, zy = z:getX(), z:getY()
+        if math.abs(zx - px) < RADIUS and math.abs(zy - py) < RADIUS then
+            local line = string.format(
+                "%.3f,%.2f,%.2f,%d,%s",
+                age, zx, zy, z:getZ(), tostring(z:getMoveState())
+            )
+            DataDumper.writeLine(DataDumper.ZOMBIE_LOG, line)
         end
     end
-
-    print("[DataDumper] ZombieLogger: " .. count .. " zombies logged at t=" .. ts)
 end
 
 Events.OnTickEvenHours.Add(logZombies)
