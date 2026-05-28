@@ -1,0 +1,4 @@
+world_age_hours,source_x,source_y,intensity,noise_type
+5.5,10729.5,9876.2,40.0,gunshot
+11.2,10770.8,9844.6,12.0,footstep
+16.7,10800.0,9830.0,80.0,explosion

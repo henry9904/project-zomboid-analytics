@@ -1,0 +1,18 @@
+[project]
+name = "project-zomboid-analytics"
+version = "0.1.0"
+requires-python = ">=3.11"
+description = "Project Zomboid game-data ETL pipeline and survival analytics."
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+extend-exclude = ["lua-mods", "data"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "SIM"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
