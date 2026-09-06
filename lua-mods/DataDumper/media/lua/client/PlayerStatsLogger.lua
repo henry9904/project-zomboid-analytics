@@ -1,36 +1,24 @@
--- PlayerStatsLogger: logs player stats + nutrition every 2 game-hours
--- Output: datadumper_player_stats.csv
+-- Logs player vitals + nutrition every 2 in-game hours.
+require "DataDumper_Init"
 
 local function logPlayerStats()
     local player = getSpecificPlayer(0)
-    if not player then return end
-
-    local stats     = player:getStats()
-    local nutrition = player:getNutrition()
-    local gt        = getGameTime()
-    local ts        = string.format("%.2f", gt:getWorldAgeHours())
-    local day       = tostring(gt:getNightsSurvived())
-    local hour      = string.format("%.2f", gt:getTimeOfDay())
-    local x = string.format("%.1f", player:getX())
-    local y = string.format("%.1f", player:getY())
-    local z = string.format("%.1f", player:getZ())
-
-    local line = table.concat({
-        ts, day, hour, x, y, z,
-        string.format("%.4f", stats:getHunger()),
-        string.format("%.4f", stats:getThirst()),
-        string.format("%.4f", stats:getFatigue()),
-        string.format("%.4f", stats:getStress()),
-        string.format("%.4f", stats:getPanic()),
-        string.format("%.4f", stats:getBoredom()),
-        string.format("%.2f", nutrition:getCalories()),
-        string.format("%.2f", nutrition:getWeight()),
-        string.format("%.2f", nutrition:getCarbohydrates()),
-        string.format("%.2f", nutrition:getProteins()),
-        string.format("%.2f", nutrition:getLipids()),
-    }, ",")
-
-    DataDumper.writeCSVLine("datadumper_player_stats.csv", line)
+    if player == nil then return end
+    local stats = player:getStats()
+    local nutri = player:getNutrition()
+    local gt    = getGameTime()
+    local line = string.format(
+        "%.3f,%d,%.2f,%.2f,%.2f,%d,%.4f,%.4f,%.4f,%.4f,%.4f,%.4f,%.1f,%.2f,%.2f,%.2f,%.2f",
+        gt:getWorldAgeHours(),
+        gt:getNightsSurvived(),
+        gt:getTimeOfDay(),
+        player:getX(), player:getY(), player:getZ(),
+        stats:getHunger(), stats:getThirst(), stats:getFatigue(),
+        stats:getStress(), stats:getPanic(), stats:getBoredom(),
+        nutri:getCalories(), nutri:getWeight(),
+        nutri:getCarbohydrates(), nutri:getProteins(), nutri:getLipids()
+    )
+    DataDumper.writeLine(DataDumper.PLAYER_LOG, line)
 end
 
 Events.OnTickEvenHours.Add(logPlayerStats)

@@ -1,0 +1,9 @@
+world_age_hours,item_type,count,calories_per_unit,carbs_per_unit,protein_per_unit,fat_per_unit
+2.0,Base.Bread,3,250,50,8,3
+2.0,Base.Steak,2,520,0,42,38
+2.0,Base.Apple,4,95,25,0,0
+2.0,Base.CannedBeans,5,210,38,12,1
+8.0,Base.Bread,2,250,50,8,3
+8.0,Base.Steak,1,520,0,42,38
+8.0,Base.Apple,4,95,25,0,0
+8.0,Base.CannedBeans,5,210,38,12,1
